@@ -1,4 +1,7 @@
 fx_version 'cerulean'
+name    'Suku_Nitro_Renew'
+author   'sukurabu'
+description  'Fixed by VojtaNN'
 games { 'gta5' }
 lua54 'yes'
 shared_script '@ox_lib/init.lua'
