@@ -1,26 +1,27 @@
 fx_version 'cerulean'
-name    'Suku_Nitro_Renew'
-author   'sukurabu'
-description  'Fixed by VojtaNN'
 games { 'gta5' }
 lua54 'yes'
 shared_script '@ox_lib/init.lua'
+              '@es_extended/imports.lua'
 
+dependencies {
+    'es_extended',
+	'oxmysql',
+	'ox_lib'
+}
 
+client_scripts {
+    '@es_extended/locale.lua',
+    'locales/*.lua',
+    'config.lua',
+    'client/main.lua'
+}
 
 
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
+    '@es_extended/locale.lua',
+    'locales/*.lua',
     'config.lua',
-    'server/main.lua',
-}
-
-client_scripts {
-    'config.lua',
-    'client/main.lua',
-}
-
-dependencies {
-	'oxmysql',
-	'ox_lib',
+    'server/main.lua'
 }

@@ -26,24 +26,23 @@ local installProp = nil
 local vehProp = nil
 local nitroVehicle
 
-Citizen.CreateThread(function()
-    while ESX == nil do
-        TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
-        Citizen.Wait(0)
-    end
+    Citizen.CreateThread(function()
+        while ESX == nil do
+            TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
+            Citizen.Wait(0)
+        end
 
-    ESX.TriggerServerCallback('suku:getInstalledVehicles', function(vehicles)
-        installedCars = vehicles
+        ESX.TriggerServerCallback('suku:getInstalledVehicles', function(vehicles)
+            installedCars = vehicles
+        end)
+
+        RefreshList()
     end)
 
-    RefreshList()
-    Citizen.Wait(1000)
-end)
-
-RegisterNetEvent('suku:syncInstalledVehicles')
-AddEventHandler('suku:syncInstalledVehicles', function(vehicles)
-	  installedCars = vehicles
-end)
+    RegisterNetEvent('suku:syncInstalledVehicles')
+    AddEventHandler('suku:syncInstalledVehicles', function(vehicles)
+        installedCars = vehicles
+    end)
 
 Citizen.CreateThread(function()
     while true do
@@ -69,7 +68,6 @@ Citizen.CreateThread(function()
                 end
             end
         end
-        Citizen.Wait(1000)
     end
 end)
 
@@ -103,10 +101,10 @@ Citizen.CreateThread(function()
 
             if not IsPedInAnyVehicle(GetPlayerPed(-1), false) then
                 if hasNitroItem and installProp ~= nil and not IsPlateInList(installProp.plate) and textLocation ~= nil and not IsInstallingNitro then
-                    ESX.Game.Utils.DrawText3D(textLocation, "Use ~r~Nitro~s~ to install nitro", 0.6)
+                    ESX.Game.Utils.DrawText3D(textLocation, _U('use_nitro_to_install'), 0.6)
                 end
                 if hasWrenchItem and installProp ~= nil and IsPlateInList(installProp.plate) and textLocation ~= nil and not IsInstallingNitro then
-                    ESX.Game.Utils.DrawText3D(textLocation, "Use ~r~Wrench~s~ to uninstall nitro", 0.6)
+                    ESX.Game.Utils.DrawText3D(textLocation, _U('use_wrench_to_uninstall'), 0.6)
                 end
             end
         end
@@ -190,13 +188,13 @@ AddEventHandler('suku:ImplementNitro', function(vehicle, plate)
     FreezeEntityPosition(GetPlayerPed(-1), true)
     SetVehicleDoorOpen(vehicle, 4, 0, 0)
     startAnim("mini@repair", "fixing_a_ped")
-    TweekNitroTimer('Installing Nitro!')
-    Wait(2000)
+    TweekNitroTimer(_U('installing_nitro_prog'))
+    Wait(10)
     PlaySoundFromEntity(-1, "Bar_Unlock_And_Raise", vehicle, "DLC_IND_ROLLERCOASTER_SOUNDS", 0, 0)
-    Wait(2000)
+    Wait(10)
     SetAudioFlag("LoadMPData", true)
     PlaySoundFrontend(-1, "Lowrider_Upgrade", "Lowrider_Super_Mod_Garage_Sounds", 1)
-    Wait(1000)
+    Wait(50)
     SetVehicleDoorShut(vehicle, 4, 0)
     FreezeEntityPosition(vehicle, false)
     FreezeEntityPosition(GetPlayerPed(-1), false)
@@ -204,7 +202,7 @@ AddEventHandler('suku:ImplementNitro', function(vehicle, plate)
     TriggerServerEvent('suku:InstallNitro', plate, 100)
        lib.notify({
            title = 'Noss',
-           description = 'Nitro has been installed!',
+           description = _U('nitro_installed'),
            type = 'success'
        })
     IsInstallingNitro = false
@@ -217,8 +215,8 @@ AddEventHandler('suku:UninstallNitroFromVehicle', function(vehicle, plate)
     FreezeEntityPosition(GetPlayerPed(-1), true)
     SetVehicleDoorOpen(vehicle, 4, 0, 0)
     startAnim("mini@repair", "fixing_a_ped")
-    TweekNitroTimer('Removing Nitro!')
-    Wait(5000)
+    TweekNitroTimer (_U('removing_nitro_prog'))
+    Wait(50)
     SetVehicleDoorShut(vehicle, 4, 0)
     FreezeEntityPosition(vehicle, false)
     FreezeEntityPosition(GetPlayerPed(-1), false)
@@ -230,13 +228,13 @@ AddEventHandler('suku:UninstallNitroFromVehicle', function(vehicle, plate)
         SetVehicleUndriveable(vehicle, true)        
         lib.notify({
             title = 'Noss',
-            description = 'Nitro has been removed \n but the car broke down, \n you cut the wrong tube!',
+            description = _U('nitro_removed_error'),
             type = 'error'
         })
     else
         lib.notify({
             title = 'Noss',
-            description = 'Nitro has been removed!',
+            description = _U('nitro_removed_sucess'),
             type = 'success'
         })
     end
@@ -387,7 +385,15 @@ function TweekNitroTimer(message)
         canCancel = true,
         disable = {
             car = false,
-        }
+        },
+        anim = {
+            startAnim("mini@repair", "fixing_a_ped")
+        },
+        prop = {
+            model = `prop_tool_wrench`,
+            pos = vec3(0.03, 0.03, 0.02),
+            rot = vec3(1.0, 0.53, -2.5) 
+        },
     })
 end
 
