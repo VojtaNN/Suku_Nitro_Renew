@@ -19,3 +19,5 @@ Dependencies:
 es_extended,
 oxmysql,
 ox_lib,
+
+Optimalization: 0.02ms - 0.10ms
