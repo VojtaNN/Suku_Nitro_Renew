@@ -29,7 +29,7 @@ local nitroVehicle
     Citizen.CreateThread(function()
         while ESX == nil do
             TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
-            Citizen.Wait(0)
+            Wait(7)
         end
 
         ESX.TriggerServerCallback('suku:getInstalledVehicles', function(vehicles)
@@ -46,9 +46,10 @@ local nitroVehicle
 
 Citizen.CreateThread(function()
     while true do
-        Citizen.Wait(0)
-        if DoesEntityExist(GetPlayerPed(-1)) then
-            if not IsPedInAnyVehicle(GetPlayerPed(-1), false) then
+        Wait(7)
+        local player = PlayerPedId()
+        if DoesEntityExist(player) then
+            if not IsPedInAnyVehicle(player, false) then
                 if installProp ~= nil then
                     if not hasNitroItem then
                         ESX.TriggerServerCallback('suku:DoesPlayerHaveNitroItem', function(item)
@@ -73,20 +74,20 @@ end)
 
 Citizen.CreateThread(function()
     while true do
-        Citizen.Wait(0)
-        local player = GetPlayerPed(-1)
+        Wait(7)
+        local player = PlayerPedId()
         if DoesEntityExist(player) then
             local textLocation = nil
             if not IsPedInAnyVehicle(player, false) then
                 local playerCoord = GetEntityCoords(player)
                 local coordA = GetEntityCoords(player, 1)
-                local coordB = GetOffsetFromEntityInWorldCoords(GetPlayerPed(-1), 0.0, 2.0, 0.0)
+                local coordB = GetOffsetFromEntityInWorldCoords(player, 0.0, 2.0, 0.0)
                 local vehicle = GetVehicleInDirection(coordA, coordB)
 
                 if DoesEntityExist(vehicle) and IsEntityAVehicle(vehicle) then
                     local x, y, z = table.unpack(GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, "engine")))
                     textLocation = vector3(x, y, z)
-                    local distanceToEngine = GetDistanceBetweenCoords(coordA, x, y, z, 1)
+                    
                     if installProp == nil then
                         installProp = ESX.Game.GetVehicleProperties(vehicle)
                     end
@@ -99,13 +100,16 @@ Citizen.CreateThread(function()
                 end
             end
 
-            if not IsPedInAnyVehicle(GetPlayerPed(-1), false) then
+            if not IsPedInAnyVehicle(player, false) then
                 if hasNitroItem and installProp ~= nil and not IsPlateInList(installProp.plate) and textLocation ~= nil and not IsInstallingNitro then
                     ESX.Game.Utils.DrawText3D(textLocation, _U('use_nitro_to_install'), 0.6)
-                end
-                if hasWrenchItem and installProp ~= nil and IsPlateInList(installProp.plate) and textLocation ~= nil and not IsInstallingNitro then
+            
+                elseif hasWrenchItem and installProp ~= nil and IsPlateInList(installProp.plate) and textLocation ~= nil and not IsInstallingNitro then
                     ESX.Game.Utils.DrawText3D(textLocation, _U('use_wrench_to_uninstall'), 0.6)
+                else
+                    Wait(500)
                 end
+  
             end
         end
     end
@@ -113,23 +117,32 @@ end)
 
 RegisterNetEvent('suku:AddInstallNitro')
 AddEventHandler('suku:AddInstallNitro', function(source)
-    local player = GetPlayerPed(-1)
+    local player = PlayerPedId()
     if DoesEntityExist(player) then
         local canInstall = true
         local playerCoord = GetEntityCoords(player)
         local coordA = GetEntityCoords(player, 1)
-        local coordB = GetOffsetFromEntityInWorldCoords(GetPlayerPed(-1), 0.0, 2.0, 0.0)
+        local coordB = GetOffsetFromEntityInWorldCoords(player, 0.0, 2.0, 0.0)
         local vehicle = GetVehicleInDirection(coordA, coordB)
 
         if installProp ~= nil then
             local x, y, z = table.unpack(GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, "engine")))
-            local distanceToEngine = GetDistanceBetweenCoords(coordA, x, y, z, 1)
+            
+            local destination = vector3(x, y, z)
+            local distanceToEngine = #(playerCoord - destination)
+
+            if distanceToEngine < 5.0 then
+                Wait(500)
+            end
+
             if distanceToEngine < 2.0 then
                 offset = vector3(x, y, z)
                 vehicleCoord = GetEntityCoords(vehicle)
 
                 if not IsPlateInList(installProp.plate) then 
                     TriggerEvent('suku:PassOnSequence', vehicle, installProp.plate, "install")
+                else
+                    Wait(500)
                 end
             end
         end
@@ -138,23 +151,32 @@ end)
 
 RegisterNetEvent('suku:RemoveUninstallNitro')
 AddEventHandler('suku:RemoveUninstallNitro', function(source)
-    local player = GetPlayerPed(-1)
+    local player = PlayerPedId()
     if DoesEntityExist(player) then
         local canInstall = true
         local playerCoord = GetEntityCoords(player)
         local coordA = GetEntityCoords(player, 1)
-        local coordB = GetOffsetFromEntityInWorldCoords(GetPlayerPed(-1), 0.0, 2.0, 0.0)
+        local coordB = GetOffsetFromEntityInWorldCoords(player, 0.0, 2.0, 0.0)
         local vehicle = GetVehicleInDirection(coordA, coordB)
 
         if DoesEntityExist(vehicle) and IsEntityAVehicle(vehicle) then
             local x, y, z = table.unpack(GetWorldPositionOfEntityBone(vehicle, GetEntityBoneIndexByName(vehicle, "engine")))
-            local distanceToEngine = GetDistanceBetweenCoords(coordA, x, y, z, 1)
+            
+            local destination = vector3(x, y, z)
+            local distanceToEngine = #(playerCoord - destination)
+
+            if distanceToEngine < 5.0 then
+                Wait(500)
+            end
+            
             if distanceToEngine < 2.0 then
                 offset = vector3(x, y, z)
                 vehicleCoord = GetEntityCoords(vehicle)
 
                 if IsPlateInList(installProp.plate) then 
                     TriggerEvent('suku:PassOnSequence', vehicle, installProp.plate, "uninstall")
+                else
+                    Wait(500)
                 end
             end
         end
@@ -163,7 +185,7 @@ end)
 
 Citizen.CreateThread(function()
     while true do
-        Citizen.Wait(0)
+        Wait(7)
         if IsInstallingNitro then
             DisableInput(vehicle)
         end
@@ -184,8 +206,9 @@ end)
 
 AddEventHandler('suku:ImplementNitro', function(vehicle, plate)
     IsInstallingNitro = true
+    local player = PlayerPedId()
     FreezeEntityPosition(vehicle, true)
-    FreezeEntityPosition(GetPlayerPed(-1), true)
+    FreezeEntityPosition(player, true)
     SetVehicleDoorOpen(vehicle, 4, 0, 0)
     startAnim("mini@repair", "fixing_a_ped")
     TweekNitroTimer(_U('installing_nitro_prog'))
@@ -197,7 +220,7 @@ AddEventHandler('suku:ImplementNitro', function(vehicle, plate)
     Wait(50)
     SetVehicleDoorShut(vehicle, 4, 0)
     FreezeEntityPosition(vehicle, false)
-    FreezeEntityPosition(GetPlayerPed(-1), false)
+    FreezeEntityPosition(player, false)
     TriggerServerEvent('suku:RemoveNitro', 1)
     TriggerServerEvent('suku:InstallNitro', plate, 100)
        lib.notify({
@@ -211,15 +234,16 @@ end)
 
 AddEventHandler('suku:UninstallNitroFromVehicle', function(vehicle, plate)
     IsInstallingNitro = true
+    local player = PlayerPedId()
     FreezeEntityPosition(vehicle, true)
-    FreezeEntityPosition(GetPlayerPed(-1), true)
+    FreezeEntityPosition(player, true)
     SetVehicleDoorOpen(vehicle, 4, 0, 0)
     startAnim("mini@repair", "fixing_a_ped")
     TweekNitroTimer (_U('removing_nitro_prog'))
     Wait(50)
     SetVehicleDoorShut(vehicle, 4, 0)
     FreezeEntityPosition(vehicle, false)
-    FreezeEntityPosition(GetPlayerPed(-1), false)
+    FreezeEntityPosition(player, false)
 
     local breakchance = math.random(1, 25)
     if breakchance == 13 then
@@ -245,13 +269,13 @@ end)
 
 Citizen.CreateThread(function()
     while true do
-        Wait(0)
+        Wait(7)
 
-        local ped = GetPlayerPed(-1)
+        local ped = PlayerPedId()
         local veh = GetVehiclePedIsIn(ped, false)
         local hash = GetEntityModel(veh)
 
-        if IsPedInAnyVehicle(GetPlayerPed(-1), false) then
+        if IsPedInAnyVehicle(ped, false) then
             if vehProp == nil then
                 vehProp = ESX.Game.GetVehicleProperties(veh)
             end
@@ -309,7 +333,7 @@ Citizen.CreateThread(function()
             end
 
             if nitroUsed then
-                local ped = GetPlayerPed(-1)
+                local ped = PlayerPedId()
                 local veh = GetVehiclePedIsIn(ped, false)
     
                 if nitroVehicle.amount > 0 then
@@ -326,7 +350,7 @@ Citizen.CreateThread(function()
                 vehProp = nil
             end
 
-            if nitroVehicle ~= nil and not IsPedInAnyVehicle(GetPlayerPed(-1), false) then
+            if nitroVehicle ~= nil and not IsPedInAnyVehicle(ped, false) then
                 nitroVehicle = nil
             end
         end
@@ -338,8 +362,9 @@ local uiy = 0.002
 
 Citizen.CreateThread(function()
     while true do
-        Citizen.Wait(0)
-        if IsPedInAnyVehicle(GetPlayerPed(-1), false) then
+        local player = PlayerPedId()
+        Wait(7)
+        if IsPedInAnyVehicle(player, false) then
             if vehProp ~= nil then
                 if IsPlateInList(vehProp.plate) then
                     if nitroVehicle ~= nil then
@@ -459,14 +484,14 @@ function flame (veh, count)
         if count == 1 then
             UseParticleFxAssetNextCall("core")
             fire = StartParticleFxLoopedOnEntityBone_2("veh_backfire", veh, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, exhausts[1], 1.0, 0, 0, 0)
-            Wait(0)
+            Wait(7)
             StopParticleFxLooped(fire, false)
         elseif count == 2 then
             UseParticleFxAssetNextCall("core")
             fire = StartParticleFxLoopedOnEntityBone_2("veh_backfire", veh, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, exhausts[1], 1.0, 0, 0, 0)
             UseParticleFxAssetNextCall("core")
             fire2 = StartParticleFxLoopedOnEntityBone_2("veh_backfire", veh, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, exhausts[2], 1.0, 0, 0, 0)
-            Wait(0)
+            Wait(7)
             StopParticleFxLooped(fire, false)
             StopParticleFxLooped(fire2, false)
         elseif count == 3 then
@@ -476,7 +501,7 @@ function flame (veh, count)
             fire2 = StartParticleFxLoopedOnEntityBone_2("veh_backfire", veh, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, exhausts[2], 1.0, 0, 0, 0)
             UseParticleFxAssetNextCall("core")
             fire3 = StartParticleFxLoopedOnEntityBone_2("veh_backfire", veh, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, exhausts[3], 1.0, 0, 0, 0)
-            Wait(0)
+            Wait(7)
             StopParticleFxLooped(fire, false)
             StopParticleFxLooped(fire2, false)
             StopParticleFxLooped(fire3, false)
@@ -489,7 +514,7 @@ function flame (veh, count)
             fire3 = StartParticleFxLoopedOnEntityBone_2("veh_backfire", veh, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, exhausts[3], 1.0, 0, 0, 0)
             UseParticleFxAssetNextCall("core")
             fire4 = StartParticleFxLoopedOnEntityBone_2("veh_backfire", veh, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, exhausts[4], 1.0, 0, 0, 0)
-            Wait(0)
+            Wait(7)
             StopParticleFxLooped(fire, false)
             StopParticleFxLooped(fire2, false)
             StopParticleFxLooped(fire3, false)
@@ -499,7 +524,8 @@ function flame (veh, count)
 end
 
 function GetVehicleInDirection(coordFrom, coordTo)
-    local rayHandle = CastRayPointToPoint(coordFrom.x, coordFrom.y, coordFrom.z, coordTo.x, coordTo.y, coordTo.z, 10, GetPlayerPed(-1), 0)
+    local player = PlayerPedId()
+    local rayHandle = CastRayPointToPoint(coordFrom.x, coordFrom.y, coordFrom.z, coordTo.x, coordTo.y, coordTo.z, 10, player, 0)
     local _, _, _, _, vehicle = GetRaycastResult(rayHandle)
     return vehicle
 end
